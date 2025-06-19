@@ -406,7 +406,16 @@ impl Element {
         let json =
             serde_json::to_string(&attrs).map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
-        Ok(format!("Element<{}, {}>", id_part, json))
+        // Determine if the element's role corresponds to an "application".
+        let role_is_application = attrs.role.to_lowercase().contains("application");
+
+        if role_is_application {
+            // If process_id fails, fallback to 0
+            let pid = self.inner.process_id().unwrap_or(0);
+            Ok(format!("Element<{}, pid={}, {}>", id_part, pid, json))
+        } else {
+            Ok(format!("Element<{}, {}>", id_part, json))
+        }
     }
 
     /// Sets the transparency of the window.
